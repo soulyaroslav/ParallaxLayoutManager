@@ -2,9 +2,13 @@ package steelkiwi.com.paralaxscrollview.manager;
 
 import android.graphics.Rect;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
+import android.widget.Toast;
 
 /**
  * Created by yaroslav on 6/1/17.
@@ -12,7 +16,7 @@ import android.view.ViewGroup;
 
 public class ParallaxLayoutManager extends RecyclerView.LayoutManager {
 
-    private static final float VIEW_HEIGHT_PERCENT = .7f;
+    private static final float VIEW_HEIGHT_PERCENT = .8f;
     private SparseArray<View> viewCache = new SparseArray<>();
     private int position = 1;
 
@@ -71,6 +75,8 @@ public class ParallaxLayoutManager extends RecyclerView.LayoutManager {
             if (view == null) {
                 // get new view from layout
                 view = recycler.getViewForPosition(position);
+                view.setScaleX(1f);
+                view.setScaleY(1f);
                 addView(view, 0);
                 measureChildWithDecorationsAndMargin(view, widthSpec, heightSpec);
                 int decoratedMeasuredWidth = getDecoratedMeasuredWidth(view);
@@ -107,6 +113,8 @@ public class ParallaxLayoutManager extends RecyclerView.LayoutManager {
             View view = viewCache.get(position);
             if (view == null) {
                 view = recycler.getViewForPosition(position);
+                view.setScaleX(1f);
+                view.setScaleY(1f);
                 addView(view);
                 measureChildWithDecorationsAndMargin(view, widthSpec, heightSpec);
                 int decoratedMeasuredWidth = getDecoratedMeasuredWidth(view);
@@ -117,7 +125,9 @@ public class ParallaxLayoutManager extends RecyclerView.LayoutManager {
             }
             viewTop = getDecoratedBottom(view);
             if (position > 0) {
-                viewTop -= viewHeight * .7f;
+                viewTop -= viewHeight * .75f;
+            } else {
+                viewTop -= viewHeight * .2f;
             }
             fillDown = viewTop <= height;
             position++;
@@ -154,13 +164,13 @@ public class ParallaxLayoutManager extends RecyclerView.LayoutManager {
 
     @Override
     public int scrollVerticallyBy(int dy, RecyclerView.Recycler recycler, RecyclerView.State state) {
-        translateCurrentView(dy);
         return scroll(dy, recycler);
     }
 
     private int scroll(int dy, RecyclerView.Recycler recycler) {
         int delta = scrollVerticallyInternal(dy) / 2;
         offsetChildrenVertical(-delta);
+        translateCurrentView(dy);
         fill(recycler);
         return delta;
     }
@@ -174,19 +184,17 @@ public class ParallaxLayoutManager extends RecyclerView.LayoutManager {
                     position--;
                 }
             }
-        }
-        if (dy > 0) { // content going to top
+        } else if (dy > 0) { // content going to top
             if (isTopIntersect(view)) {
                 if (position < getChildCount() - 1) {
                     position++;
                 }
             }
         }
-        if(position > 0 && position < getChildCount() - 1) {
+        if (position > 0 && position < getChildCount() - 1) {
             view.setTranslationY(-delta + view.getTranslationY());
-            view.setTranslationX(0);
         }
-        if(position == 0) {
+        if (position == 0) {
             position = 1;
         }
     }
@@ -243,19 +251,34 @@ public class ParallaxLayoutManager extends RecyclerView.LayoutManager {
 
     // get invisible rectangle in the top of the screen
     private Rect getTopBounds() {
-        return new Rect(0, 0, getWidth(), 30);
+        return new Rect(0, -getHeight(), getWidth(), 40);
     }
 
     // get invisible rectangle in the bottom of the screen
     private Rect getBottomBounds() {
-        return new Rect(0, getHeight() - (int)(getHeight() * .4f), getWidth(), getHeight());
+        return new Rect(0, getHeight() - (int)(getHeight() * .4f), getWidth(), getHeight() + getHeight());
     }
 
-    private Rect getViewBounds(View view) {
-        int top = getDecoratedTop(view);
-        int left = getDecoratedLeft(view);
-        int right = getDecoratedRight(view);
-        int bottom = getDecoratedBottom(view);
-        return new Rect(left, top, right, bottom);
+    public class ResetAnimimation extends Animation {
+        int targetHeight;
+        int originalHeight;
+        int extraHeight;
+        View mView;
+
+        protected ResetAnimimation(View view, int targetHeight) {
+            this.mView = view;
+            this.targetHeight = targetHeight;
+            originalHeight = view.getHeight();
+            extraHeight = this.targetHeight - originalHeight;
+        }
+
+        @Override
+        protected void applyTransformation(float interpolatedTime, Transformation t) {
+
+            int newHeight;
+            newHeight = (int) (targetHeight - extraHeight * (1 - interpolatedTime));
+            mView.getLayoutParams().height = newHeight;
+            mView.requestLayout();
+        }
     }
 }
