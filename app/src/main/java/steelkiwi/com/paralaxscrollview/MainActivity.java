@@ -27,15 +27,13 @@ public class MainActivity extends AppCompatActivity {
 
     private List<Integer> getData() {
         List<Integer> strings = new ArrayList<>();
-        strings.add(R.mipmap.q1);
-        strings.add(R.mipmap.q2);
-        strings.add(R.mipmap.q3);
-        strings.add(R.mipmap.q4);
-
-        strings.add(R.mipmap.q1);
-        strings.add(R.mipmap.q2);
-        strings.add(R.mipmap.q3);
-        strings.add(R.mipmap.q4);
+        strings.add(R.color.q1);
+        strings.add(R.color.q2);
+        strings.add(R.color.q3);
+        strings.add(R.color.q4);
+        strings.add(R.color.q5);
+        strings.add(R.color.q6);
+        strings.add(R.color.q7);
         return strings;
     }
 }
